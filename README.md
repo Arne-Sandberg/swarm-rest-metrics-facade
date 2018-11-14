@@ -43,3 +43,8 @@ services:
       - "9200:9200"
     restart: unless-stopped
 ```
+
+## Improvement ideas
+
+  1. log the plot IDs from the response to ElasticSearch so we can see which ones are most popular
+
