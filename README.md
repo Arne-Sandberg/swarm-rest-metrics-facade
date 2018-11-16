@@ -47,4 +47,5 @@ services:
 ## Improvement ideas
 
   1. log the plot IDs from the response to ElasticSearch so we can see which ones are most popular
+  1. users calling the API directly can filter columns so the plot ID won't always be there. We need to support this gracefully.
 
