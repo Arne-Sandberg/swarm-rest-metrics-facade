@@ -17,10 +17,12 @@ const proxy = hoxy.createServer({
   console.error(getConfigMsg())
   console.error('Startup successful')
 })
+
 proxy.intercept('request', (req, resp, cycle) => {
   cycle.data('remoteAddress', req._source.connection.remoteAddress)
   cycle.data('userAgent', req._source.headers['user-agent'])
 })
+
 proxy.intercept({
   phase: 'response',
   method: 'GET',
@@ -36,32 +38,36 @@ const esClient = new elasticsearch.Client({
 })
 
 async function teeForLogging (req, resp, cycle) {
-  const body = resp.json
-  const baseLogMsg = {
-    resource: req.url.replace(/\?.*/, ''),
-    url: req.url,
-    remoteAddr: cycle.data('remoteAddress'),
-    userAgent: cycle.data('userAgent')
-  }
-  if (resp.statusCode !== 200 || body.constructor !== Array) {
-    console.log(`Ignoring non-200 or non-Array response: ${JSON.stringify(baseLogMsg)}`)
-    return
-  }
-  const count = body.length
-  const distinctSiteIds = body.reduce((accum, curr) => {
-    const siteId = curr.site_location_name
-    if (!siteId) {
-      return accum
+  try {
+    const body = resp.json
+    const baseLogMsg = {
+      resource: req.url.replace(/\?.*/, ''),
+      url: req.url,
+      remoteAddr: cycle.data('remoteAddress'),
+      userAgent: cycle.data('userAgent')
     }
-    accum[siteId] = true
-    return accum
-  }, {})
-  const siteCount = Object.keys(distinctSiteIds).length
-  if (count < siteCount) {
-    console.log(`[WARN] that doesn't look good. Record count=${count} is less than ` +
-      `site count=${siteCount} for: ${JSON.stringify(baseLogMsg)}`)
+    if (resp.statusCode !== 200 || body.constructor !== Array) {
+      console.log(`Ignoring non-200 or non-Array response: ${JSON.stringify(baseLogMsg)}`)
+      return
+    }
+    const count = body.length
+    const distinctSiteIds = body.reduce((accum, curr) => {
+      const siteId = curr.site_location_name
+      if (!siteId) {
+        return accum
+      }
+      accum[siteId] = true
+      return accum
+    }, {})
+    const siteCount = Object.keys(distinctSiteIds).length
+    if (count < siteCount) {
+      console.log(`[WARN] that doesn't look good. Record count=${count} is less than ` +
+        `site count=${siteCount} for: ${JSON.stringify(baseLogMsg)}`)
+    }
+    await storeLog(Object.assign(baseLogMsg, {count, siteCount}))
+  } catch (err) {
+    console.error('Failed while logging a call')
   }
-  await storeLog(Object.assign(baseLogMsg, {count, siteCount}))
 }
 
 async function storeLog (values) {
