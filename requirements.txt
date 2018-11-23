@@ -1,0 +1,3 @@
+elasticsearch
+mitmproxy==4.0.4
+

@@ -1,0 +1,21 @@
+version: '3'
+services:
+  # you would probably define the server that you're acting as a facade for here too
+  stats_facade:
+    build: ..
+    ports:
+      - "30000:80"
+    links:
+      - es:es
+    environment:
+      TARGET_URL: http://swarmapi.ausplots.aekos.org.au
+      ES_URL: es:9200
+      INDEX_NAME: swarm-rest
+    restart: unless-stopped
+    depends_on:
+      - es
+  es:
+    image: elasticsearch:6.5.1
+    ports:
+      - "9200:9200"
+    restart: unless-stopped

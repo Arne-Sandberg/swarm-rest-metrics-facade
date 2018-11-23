@@ -3,49 +3,50 @@ A reverse proxy that does a (nice) man-in-the-middle attack for calls to a HTTP 
 
 ## Run it directly
 
-Run it with
 ```bash
-export TARGET_URL=http://some.host:30001
-export LISTEN_PORT=3000
+TARGET_URL=http://some.host:30001
+LISTEN_PORT=8080
 export ES_URL=localhost:9200
 export INDEX_NAME=swarm-metrics
-node index.js
+# optionally create and activate a virtualenv
+pip install -r requirements.txt
+mitmdump \
+  -p $LISTEN_PORT \
+  --mode reverse:$TARGET_URL \
+  -s ./log-metrics.py
+```
+
+## Run the docker container directly
+```bash
+IMAGE_NAME='tomsaleeba/swarm-rest-metrics-facade:test'
+docker build -t $IMAGE_NAME .
+# FIXME need instructions on how to deploy this to the same network as an ES instance, then use ES_URL env var
+docker run \
+  --rm \
+  -it \
+  -e TARGET_URL=http://swarmapi.ausplots.aekos.org.au \
+  -p 30000:80 \
+  $IMAGE_NAME
+# in another terminal
+curl 'http://localhost:30000/site?limit=1'
 ```
 
 ## Run it with docker-compose
 
-Use it in a `docker-compose.yml` file like:
-```yaml
-version: '3'
-services:
-  server:
-    image: postgrest/postgrest:v5.1.0
-  statsFacade:
-    image: tomsaleeba/swarm-facade
-    ports:
-      - "3000:3000"
-    links:
-      - server:server
-      - elk:elk
-    environment:
-      TARGET_URL: http://server:3000
-      LISTEN_PORT: 3000
-      ES_URL: elk:9200
-      INDEX_NAME: swarm-rest
-    restart: unless-stopped
-    depends_on:
-      - server
-      - elk
-  elk:
-    image: sebp/elk
-    ports:
-      - "5601:5601"
-      - "9200:9200"
-    restart: unless-stopped
+An example is defined in `example/docker-compose.yml`, run it with:
+```bash
+cd example/
+docker-compose up
+# wait for a few seconds for ES to be ready
+# in another terminal
+curl 'localhost:30000/site?limit=1'
+curl 'localhost:9200/swarm-rest/_search' # check metric was added to ES
+# back to original terminal
+# <C-c> to kill
+docker-compose down
 ```
 
 ## Improvement ideas
 
   1. log the plot IDs from the response to ElasticSearch so we can see which ones are most popular
-  1. users calling the API directly can filter columns so the plot ID won't always be there. We need to support this gracefully.
 
