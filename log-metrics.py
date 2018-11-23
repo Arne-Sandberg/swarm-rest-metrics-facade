@@ -17,7 +17,7 @@ try:
 except KeyError:
     es_index = 'ausplots_r'
 
-print("""Runtime config:
+ctx.log.warn("""Runtime config:
     ElasticSearch URL: {es_url}
     ElasticSearch index: {es_index}""".format(es_url=es_url, es_index=es_index))
 
@@ -26,9 +26,10 @@ es = Elasticsearch([es_url])
 def log_to_elasticsearch(msg):
     msg['eventDate'] = datetime.now()
     try:
+        # print('Logging message: %s' % str(msg)) # FIXME add configurable python logging
         resp = es.index(index=es_index, doc_type='apicall', body=msg)
     except Exception as e:
-        print('Failed to store metric in ES', e)
+        print('[ERROR] Failed to store metric in ES: ', e)
 
 
 def count_sites(body):
@@ -52,15 +53,15 @@ def count_sites(body):
 class MetricsLogger:
     def response(self, flow):
         if flow.response.status_code is not 200:
-            ctx.log.info('ignoring reponse with non 200 status') # reduce logging level?
+            ctx.log.info('ignoring reponse with non 200 status')
             return
         try:
             body_json = json.loads(flow.response.content)
         except json.decoder.JSONDecodeError:
-            ctx.log.info('ignoring response that is not JSON') # reduce logging level?
+            ctx.log.info('ignoring response that is not JSON')
             return
         if not isinstance(body_json, list):
-            ctx.log.info('ignoring response that is JSON but not an array') # reduce logging level?
+            ctx.log.info('ignoring response that is JSON but not an array')
             return
         parsed_url = urlparse(flow.request.url)
         query_params = ''

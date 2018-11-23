@@ -36,7 +36,7 @@ curl 'http://localhost:30000/site?limit=1'
 An example is defined in `example/docker-compose.yml`, run it with:
 ```bash
 cd example/
-docker-compose up
+docker-compose up --build
 # wait for a few seconds for ES to be ready
 # in another terminal
 curl 'localhost:30000/site?limit=1'

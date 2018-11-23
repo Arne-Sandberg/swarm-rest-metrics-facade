@@ -19,3 +19,12 @@ services:
     ports:
       - "9200:9200"
     restart: unless-stopped
+  kibana:
+    image: kibana:6.5.1
+    ports:
+      - "5601:5601"
+    links:
+      - es:es
+    environment:
+      ELASTICSEARCH_URL: http://es:9200
+    restart: unless-stopped
