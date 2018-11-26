@@ -1,14 +1,20 @@
 version: '3'
 services:
-  # you would probably define the server that you're acting as a facade for here too
+  nginx_filter_proxy:
+    image: tomsaleeba/nginx-filter-proxy:1.1.0
+    links:
+      - stats_facade:stats_facade
+    ports:
+      - 30000:80
+    environment:
+      TARGET_SERVER: 'stats_facade:80'
+      DNS_NAME: some.host # should be your "real" DNS name when deployed
   stats_facade:
     build: ..
-    ports:
-      - "30000:80"
     links:
       - es:es
     environment:
-      TARGET_URL: http://swarmapi.ausplots.aekos.org.au
+      TARGET_URL: http://swarmapi.ausplots.aekos.org.au # using live service, could also define a server in this stack
       ES_URL: es:9200
       INDEX_NAME: swarm-rest
     restart: unless-stopped
@@ -17,12 +23,12 @@ services:
   es:
     image: elasticsearch:6.5.1
     ports:
-      - "9200:9200"
+      - 9200:9200
     restart: unless-stopped
   kibana:
     image: kibana:6.5.1
     ports:
-      - "5601:5601"
+      - 5601:5601
     links:
       - es:es
     environment:

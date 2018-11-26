@@ -36,13 +36,10 @@ curl 'http://localhost:30000/site?limit=1'
 An example is defined in `example/docker-compose.yml`, run it with:
 ```bash
 cd example/
-docker-compose up --build
+docker-compose up --build -d
 # wait for a few seconds for ES to be ready
-# in another terminal
-curl 'localhost:30000/site?limit=1'
+curl 'localhost:30000/site?limit=1' # perform an API call
 curl 'localhost:9200/swarm-rest/_search' # check metric was added to ES
-# back to original terminal
-# <C-c> to kill
 docker-compose down
 ```
 

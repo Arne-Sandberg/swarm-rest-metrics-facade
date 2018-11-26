@@ -64,13 +64,18 @@ class MetricsLogger:
             ctx.log.info('ignoring response that is JSON but not an array')
             return
         parsed_url = urlparse(flow.request.url)
+        try:
+            # for when we're running behind nginx
+            remote_addr = flow.request.headers['x-real-ip']
+        except KeyError:
+            remote_addr = flow.client_conn.address[0]
         query_params = ''
         if parsed_url.query:
             query_params = '?' + parsed_url.query
         metric = {
             'resource': parsed_url.path,
             'url': '%s%s' % (parsed_url.path, query_params),
-            'remoteAddr': flow.client_conn.address[0],
+            'remoteAddr': remote_addr,
             'userAgent': flow.request.headers['user-agent'],
             'recordCount': len(body_json),
             'siteCount': count_sites(body_json)
