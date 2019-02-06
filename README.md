@@ -18,7 +18,7 @@ mitmdump \
 
 ## Run the docker container directly
 ```bash
-IMAGE_NAME='tomsaleeba/swarm-rest-metrics-facade:test'
+IMAGE_NAME='ternandsparrow/swarm-rest-metrics-facade:test'
 docker build -t $IMAGE_NAME .
 # FIXME need instructions on how to deploy this to the same network as an ES instance, then use ES_URL env var
 docker run \

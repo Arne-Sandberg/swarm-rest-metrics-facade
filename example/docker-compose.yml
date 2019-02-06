@@ -1,7 +1,7 @@
 version: '3'
 services:
   nginx_filter_proxy:
-    image: tomsaleeba/nginx-filter-proxy:1.1.0
+    image: ternandsparrow/nginx-filter-proxy:2.1.1 # TODO might need to update version tag
     links:
       - stats_facade:stats_facade
     ports:
